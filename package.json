@@ -1,36 +1,42 @@
 {
-  "name": "react-laboratorio",
-  "private": true,
-  "version": "0.0.0",
+  "name": "07-cloud-master-frontend-lemoncode",
+  "version": "1.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite --host",
-    "build": "tsc && vite build",
-    "preview": "vite preview",
-    "test": "vitest",
-    "coverage": "vitest run --coverage"
+    "start": "run-p -l type-check:watch start:dev",
+    "start:dev": "vite --port 8080",
+    "prebuild": "npm run type-check",
+    "build": "vite build",
+    "type-check": "tsc --noEmit --preserveWatchOutput",
+    "type-check:watch": "npm run type-check -- --watch"
   },
-  "devDependencies": {
-    "@types/jest": "^29.5.0",
-    "@types/react": "^19.1.8",
-    "@types/react-dom": "^19.1.6",
-    "@vitejs/plugin-react": "^4.6.0",
-    "sass-embedded": "^1.98.0",
-    "typescript": "^5.8.3",
-    "vite": "^7.0.4",
-    "vite-plugin-checker": "^0.10.0",
-    "vite-tsconfig-paths": "^6.1.1"
+  "imports": {
+    "#*": "./src/*"
   },
+  "author": "Lemoncode",
+  "license": "MIT",
   "dependencies": {
+    "@emotion/css": "^11.13.5",
     "@emotion/react": "^11.14.0",
     "@emotion/styled": "^11.14.1",
-    "@fontsource-variable/cormorant-garamond": "^5.2.6",
-    "@fontsource-variable/geist": "^5.2.8",
-    "@mui/icons-material": "^7.3.9",
-    "@mui/material": "^7.3.9",
-    "react": "^19.1.0",
-    "react-dom": "^19.1.0",
-    "react-router-dom": "^7.8.2",
-    "use-debounce": "^10.1.1"
+    "@lemoncode/fonk": "^1.5.4",
+    "@lemoncode/fonk-formik": "^4.0.1",
+    "@mui/material": "^9.4.0",
+    "@tanstack/react-router": "^1.170.32",
+    "axios": "^1.20.0",
+    "formik": "^2.4.9",
+    "react": "^19.2.8",
+    "react-dom": "^19.2.8"
+  },
+  "devDependencies": {
+    "@tanstack/router-devtools": "^1.167.1",
+    "@tanstack/router-plugin": "^1.168.35",
+    "@types/react": "^19.2.18",
+    "@types/react-dom": "^19.2.5",
+    "@types/react-router-dom": "^5.3.3",
+    "@vitejs/plugin-react": "^6.1.1",
+    "npm-run-all": "^4.1.5",
+    "typescript": "^7.0.2",
+    "vite": "^8.2.2"
   }
 }

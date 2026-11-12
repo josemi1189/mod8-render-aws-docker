@@ -1,5 +1,14 @@
-import { AppRouter } from "./router";
+import React from 'react';
+import { RouterProvider } from '@tanstack/react-router';
+import { router } from '#core/router';
+import { ThemeProviderComponent } from '#core/theme';
 
-export const App = () => {
-  return <AppRouter />;
+const App: React.FC = () => {
+  return (
+    <ThemeProviderComponent>
+      <RouterProvider router={router} />
+    </ThemeProviderComponent>
+  );
 };
+
+export default App;
