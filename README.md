@@ -1,134 +1,119 @@
-# 04 Manual Render Deploy
+# Despliegue en Render usando Docker
 
-In this example we are going to create a production server using Render.
+🔗 [Repositorio GitHub](https://github.com/josemi1189/mod8-render-docker)
 
-We will start from `03-github-branch`.
+🔗 [Despliegue en Render con Docker](https://mod8-render-docker.onrender.com)
 
-# Steps to build it
+1. Debemos generar los archivos de configuración para generar la imagen en **Docker Hub**. Se debe optimizar la imagen de forma que contenga solo los archivos necesarios.
 
-`npm install` to install previous sample packages:
+   `Dockerfile`:
 
-```bash
-npm install
-```
+   ```docker
+   # Crea fase base, genera carpeta contenedora e indica directorio de trabajo
+   FROM node:24-alpine AS base
+   RUN mkdir -p /usr/app
+   WORKDIR /usr/app
 
-[Render](https://render.com/) is a cloud provider that allows you to deploy different types of apps based on git repository changes.
+   # Copia ficheros dentro del directorio de trabajo establecido, instala dependencias y genera build
+   FROM base  AS front-build
+   COPY ./ ./
+   RUN npm install
+   RUN npm run build
 
-First, we need to prepare the final files that we want to deploy, let's restore the vite configuration:
+   # Copia los archivos necesarios para despliegue
+   FROM base AS release
+   COPY --from=front-build /usr/app/dist ./public
+   COPY ./server/package.json ./
+   COPY ./server/package-lock.json ./
+   COPY ./server/index.js ./
 
-_./vite.config.js_
+   # Instala dependencias omitiendo las de desarrollo
+   RUN npm ci --omit=dev
 
-```diff
-import { defineConfig, splitVendorChunkPlugin } from 'vite';
-import react from '@vitejs/plugin-react';
-import path from 'path';
+   CMD ["node", "index.js"]
+   ```
 
-export default defineConfig({
-- base: './',
-  envPrefix: 'PUBLIC_',
-  ...
+   `.dockerignore`: Debe incluir todo lo que no sea necesario subir a Docker. Si utilizamos .env.production no deberá incluirse para permitir su subida.
 
-```
+   ```
+   node_modules
+   dist
+   .github
+   .gitignore
+   .env.development
+   ```
 
-And restore router configuration:
+2. Generar imagen del repositorio con la versión que corresponda:
 
-_./src/core/router/router.ts_
+   `docker build -t <nombre-app>:<número de versión> .`
 
-```diff
-- import { createRouter, createHashHistory } from '@tanstack/react-router';
-+ import { createRouter } from '@tanstack/react-router';
-// The route-tree file is generated automatically. Do not modify this file manually.
-import { routeTree } from './route-tree';
+   ```
+   docker build -t render-docker:1 .
+   ```
 
-- const history = createHashHistory();
+   **NOTA:** El comando incluye un punto . al final necesario que indica la ruta o directorio donde se encuentra el archivo Dockerfile y permite indicar directorio al que le queremos dar acceso.
 
-export const router = createRouter({
-  routeTree,
-- history,
-});
-...
+3. Una vez ejecutado el comando, podemos comprobar si la imagen se ha compilado correctamente con el comando `docker images`:
 
-```
+   ![Crea imagen de Docker](docs/create-image.jpg)
 
-Run build:
+4. Crear contenedor Docker y confirmar que la aplicación carga correctamente.
 
-```bash
-npm run build
+   `docker run --name <nombre-contenedor> -p <puerto local:puerto del proceso del contenedor> - e PORT=<puerto> <nombre-imagen>:<versión>`
 
-```
+   ```
+   docker run --name render-docker-container -p 8083:8083 render-docker:1
+   ```
 
-Let's copy the `dist` folder content to `server/public` folder.
+   🔗 [http://localhost:8083](http://localhost:8083)
 
-_./server_
+   ![Crea contenedor de Docker](docs/contenedor.jpg)
 
-```
-|server/
-|-- public/
-|----- assets/
-|----- index.html
-|-- index.js
-|-- package-lock.json
-|-- package.json
-```
+   > Permite generar tantos contenedores como sean necesarios utilizando distinto nombre de contenedor y distinto puerto.
 
-Let's create a new empty repository:
+   ```
+   docker run --name render-docker-container2 -p 8083:8083 render-docker:1
+   ```
 
-![01-create-repo](./readme-resources/01-create-repo.png)
+5. Publicar imagen en Dockerhub.
+   1. Es necesario estar logueado en docker para tener acceso mediante línea de comandos. Podemos loguearnos o confirmar que lo estamos ejecutando:
 
-Clone repository:
+      ```
+      docker login
+      ```
 
-```bash
-git clone git@github.com<your-url>.git .
+   2. Para subir la imagen a DockerHub, el nombre debe incluir nuestro nombre de usuario. Si en local hemos creado la imagen sin utilizar formato `usuario-docker/nombre-imagen`, es posible asignarle un alias para que nos permita publicarla.
 
-```
+      `docker tag \<imagen-local:versión> \<usuario>/\<nombre-imagen:version>`
 
-> Note: you can use a dot at the end of the command to clone the repository in the current folder.
+      ```
+      docker tag render-docker:1 josemi1189/render-docker:1
+      ```
 
-Let's copy the `server` files into the deploy repository root path.
+   3. Subir imagen a Docker Hub:
 
-_Root path of the deploy repository_
+      `docker push \<alias-imagen-creada>`
 
-```
-|-- public/
-|----- assets/
-|----- index.html
-|-- index.js
-|-- package-lock.json
-|-- package.json
+      ```
+      docker push josemi1189/render-docker:1
+      ```
 
-```
+      ![Imagen versión 1 en Docker Hub](docs/imagen-dockerhub.jpg)
 
-Commit and push:
+   4. De esta forma se compila con la arquitectura del sistema de nuestro equipo. Para compilar con distintas arquitecturas podemos ejecutar el comando:
 
-```bash
-git add .
-git commit -m "initial commit"
-git push
+      `docker buildx build --platform linux/amd64,linux/arm64 -t <nombre_repositorio_dockerHub:versión> <--push (opcional)> .`
 
-```
+      > --push: Publica la imagen multi-arquitectura en Docker Hub.
 
-Create a new render app:
+      ```
+      docker buildx build --platform linux/amd64,linux/arm64 -t josemi1189/render-docker:2 --push .
+      ```
 
-![02-create-render-app](./readme-resources/02-create-render-app.png)
+      ![Imagen creada con multi-arquitectura](docs/multi-arquitectura.jpg)
 
-![03-connect-github](./readme-resources/03-connect-github.png)
+6. Para publicar en Render, debemos generar un **Web Service** y enlazar con nuestro repositorio de GitHub con la diferencia de que al elegir el lenguaje utilizado deberá estar seleccionado **Docker**.
 
-Configure web service:
+   ![Configuración de Render](docs/despliegue-render.jpg)
 
-![04-configure-web-service](./readme-resources/04-configure-web-service.png)
-
-![05-configure-runtime](./readme-resources/05-configure-runtime.png)
-
-Select `Free plan` and clicks on `Deploy Web Service` button.
-
-After the successful deploy, open `https://<app-name>.onrender.com`.
-
-# About Basefactor + Lemoncode
-
-We are an innovating team of Javascript experts, passionate about turning your ideas into robust products.
-
-[Basefactor, consultancy by Lemoncode](http://www.basefactor.com) provides consultancy and coaching services.
-
-[Lemoncode](http://lemoncode.net/services/en/#en-home) provides training services.
-
-For the LATAM/Spanish audience we are running an Online Front End Master degree, more info: http://lemoncode.net/master-frontend
+   ![Despliegue en Render](docs/deploy.jpg)
