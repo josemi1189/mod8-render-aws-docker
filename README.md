@@ -1,6 +1,6 @@
 # DESPLIEGUE EN RENDER USANDO DOCKER
 
-🔗 [Repositorio GitHub](https://github.com/josemi1189/mod8-render-docker)
+🔗 [Repositorio GitHub](https://github.com/josemi1189/mod8-render-aws-docker)
 
 🔗 [Despliegue en Render con Docker](https://mod8-render-docker.onrender.com)
 
@@ -124,7 +124,7 @@
 
 # DESPLIEGUE EN AWS USANDO DOCKER
 
-🔗 [Repositorio GitHub](https://github.com/josemi1189/mod8-render-docker)
+🔗 [Repositorio GitHub](https://github.com/josemi1189/mod8-render-aws-docker)
 
 🔗 [Despliegue en AWS con Docker](http://ec2-16-171-21-76.eu-north-1.compute.amazonaws.com)
 
